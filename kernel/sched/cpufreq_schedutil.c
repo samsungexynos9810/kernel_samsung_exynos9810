@@ -273,6 +273,11 @@ static void sugov_get_util(unsigned long *util, unsigned long *max, u64 time)
 	rt = (rt * max_cap) >> SCHED_CAPACITY_SHIFT;
 
 	*util = boosted_cpu_util(cpu);
+
+	if (sched_feat(UTIL_EST)) {
+		*util = max_t(unsigned long, *util,
+			     READ_ONCE(cpu_rq(cpu)->cfs.avg.util_est.enqueued));
+	}
 	if (likely(use_pelt()))
 		*util = *util + rt;
 
