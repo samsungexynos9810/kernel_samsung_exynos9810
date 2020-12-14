@@ -1472,7 +1472,8 @@ static irqreturn_t sec_ts_irq_thread(int irq, void *ptr)
 #endif
 
 	/* prevent CPU from entering deep sleep */
-	pm_qos_update_request(&ts->pm_qos_req, 100);
+	pm_qos_update_request(&ts->pm_i2c_req, 100);
+	pm_qos_update_request(&ts->pm_touch_req, 100);
 
 	mutex_lock(&ts->eventlock);
 
@@ -1481,7 +1482,8 @@ static irqreturn_t sec_ts_irq_thread(int irq, void *ptr)
 
 	mutex_unlock(&ts->eventlock);
 
-	pm_qos_update_request(&ts->pm_qos_req, PM_QOS_DEFAULT_VALUE);
+	pm_qos_update_request(&ts->pm_i2c_req, PM_QOS_DEFAULT_VALUE);
+	pm_qos_update_request(&ts->pm_touch_req, PM_QOS_DEFAULT_VALUE);
 
 	return IRQ_HANDLED;
 }
@@ -2362,8 +2364,15 @@ static int sec_ts_probe(struct i2c_client *client, const struct i2c_device_id *i
 				"%s: TOUCH DEVICE ID : %02X, %02X, %02X, %02X, %02X\n", __func__,
 				deviceID[0], deviceID[1], deviceID[2], deviceID[3], deviceID[4]);
 
-	pm_qos_add_request(&ts->pm_qos_req, PM_QOS_CPU_DMA_LATENCY,
-		PM_QOS_DEFAULT_VALUE);
+	ts->pm_i2c_req.type = PM_QOS_REQ_AFFINE_IRQ;
+	ts->pm_i2c_req.irq = i2c_master->irq;
+	pm_qos_add_request(&ts->pm_i2c_req, PM_QOS_CPU_DMA_LATENCY,
+			   PM_QOS_DEFAULT_VALUE);
+
+	ts->pm_touch_req.type = PM_QOS_REQ_AFFINE_IRQ;
+	ts->pm_touch_req.irq = client->irq;
+	pm_qos_add_request(&ts->pm_touch_req, PM_QOS_CPU_DMA_LATENCY,
+			   PM_QOS_DEFAULT_VALUE);
 
 	ret = sec_ts_i2c_read(ts, SEC_TS_READ_FIRMWARE_INTEGRITY, &result, 1);
 	if (ret < 0) {
@@ -2554,7 +2563,8 @@ static int sec_ts_probe(struct i2c_client *client, const struct i2c_device_id *i
  err_fb_client:
 #endif
 err_irq:
-	pm_qos_remove_request(&ts->pm_qos_req);
+	pm_qos_remove_request(&ts->pm_i2c_req);
+	pm_qos_remove_request(&ts->pm_touch_req);
 	if (ts->plat_data->support_dex) {
 		input_unregister_device(ts->input_dev_pad);
 		ts->input_dev_pad = NULL;
@@ -3298,7 +3308,8 @@ static int sec_ts_remove(struct i2c_client *client)
 	free_irq(ts->client->irq, ts);
 	input_info(true, &ts->client->dev, "%s: irq disabled\n", __func__);
 
-	pm_qos_remove_request(&ts->pm_qos_req);
+	pm_qos_remove_request(&ts->pm_i2c_req);
+	pm_qos_remove_request(&ts->pm_touch_req);
 
 #ifdef USE_POWER_RESET_WORK
 	cancel_delayed_work_sync(&ts->reset_work);
