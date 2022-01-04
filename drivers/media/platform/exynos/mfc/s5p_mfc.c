@@ -468,7 +468,7 @@ static int s5p_mfc_open(struct file *file)
 		dev->num_dec++;
 		if (dev->num_dec == 1)
 			disable_cib_video_boost(true);
-			disable_devfreq_video_boost(true);
+		disable_devfreq_video_boost(true);
 	}
 
 	/* Allocate memory for context */
@@ -622,7 +622,7 @@ err_ctx_alloc:
 		dev->num_dec--;
 		if (dev->num_dec == 0)
 		        disable_cib_video_boost(false);
-			disable_devfreq_video_boost(false);
+		disable_devfreq_video_boost(false);
 	}
 
 err_node_type:
@@ -730,7 +730,7 @@ static int s5p_mfc_release(struct file *file)
 		dev->num_dec--;
 		if (dev->num_dec == 0)
 			disable_cib_video_boost(false);
-			disable_devfreq_video_boost(false);
+		disable_devfreq_video_boost(false);
 	}
 
 	if (dev->num_inst == 0) {
