@@ -631,7 +631,7 @@ static int dpp_check_limitation(struct dpp_device *dpp, struct dpp_params_info *
 	}
 
 	/* HDR channel limitation */
-	if ((p->hdr != DPP_HDR_OFF) && (p->rot > DPP_ROT_180)) {
+	if ((p->hdr != DPP_HDR_OFF) && p->rot) {
 		dpp_err("Not support [HDR+ROTATION] at the same time in DPP%d\n",
 			dpp->id);
 		return -EINVAL;
