@@ -2201,6 +2201,7 @@ static void sec_ts_set_input_prop(struct sec_ts_data *ts, struct input_dev *dev,
 static int sec_ts_probe(struct i2c_client *client, const struct i2c_device_id *id)
 {
 	struct sec_ts_data *ts;
+	struct exynos5_i2c *i2c_master = (struct exynos5_i2c *)client->adapter->algo_data;
 	struct sec_ts_plat_data *pdata;
 	struct sec_tclm_data *tdata = NULL;
 	int ret = 0;
@@ -2318,6 +2319,8 @@ static int sec_ts_probe(struct i2c_client *client, const struct i2c_device_id *i
 			goto err_allocate_input_dev_pad;
 		}
 	}
+
+	i2c_master->stop_after_trans = 1;
 
 	ts->touch_count = 0;
 	ts->sec_ts_i2c_write = sec_ts_i2c_write;
