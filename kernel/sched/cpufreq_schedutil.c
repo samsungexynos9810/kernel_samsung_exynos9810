@@ -997,6 +997,40 @@ static void sugov_exit(struct cpufreq_policy *policy)
 	cpufreq_disable_fast_switch(policy);
 }
 
+#ifdef CONFIG_EXYNOS_HOTPLUG_GOVERNOR
+int sugov_fast_start(struct cpufreq_policy *policy, unsigned int cpu)
+{
+	struct sugov_policy *sg_policy;
+	struct sugov_cpu *sg_cpu;
+
+	down_write(&policy->rwsem);
+	cpumask_set_cpu(cpu, policy->cpus);
+
+	sg_policy = policy->governor_data;
+	sg_cpu = &per_cpu(sugov_cpu, cpu);
+
+	memset(sg_cpu, 0, sizeof(*sg_cpu));
+	sg_cpu->sg_policy = sg_policy;
+	sg_cpu->util = 0;
+	sg_cpu->max = 0;
+	sg_cpu->flags = 0;
+	sg_cpu->last_update = 0;
+	sg_cpu->iowait_boost = 0;
+	sg_cpu->iowait_boost_max = policy->cpuinfo.max_freq;
+	cpufreq_add_update_util_hook(cpu, &sg_cpu->update_util,
+				     sugov_update_shared);
+
+	up_write(&policy->rwsem);
+
+	return 1;
+}
+#else
+int sugov_fast_start(struct cpufreq_policy *policy, unsigned int cpu)
+{
+	return 0;
+}
+#endif
+
 static int sugov_start(struct cpufreq_policy *policy)
 {
 	struct sugov_policy *sg_policy = policy->governor_data;
