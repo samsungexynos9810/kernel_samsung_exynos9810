@@ -69,10 +69,6 @@ enum __RKP_CMD_ID {
 #define TSEC_JAR		"tsec_jar"
 #define VFSMNT_JAR		"vfsmnt_cache"
 
-#ifdef CONFIG_KNOX_KAP
-extern int boot_mode_security;
-#endif
-
 extern u8 rkp_pgt_bitmap[];
 extern u8 rkp_map_bitmap[];
 extern u8 __rkp_start_prot_page[];
